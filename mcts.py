@@ -38,13 +38,12 @@ class MCTSNode:
         # get win or loss
         pass
 
-    def update(self, winner):
+    def update(self, win_prob):
         '''
-        recursively backpropagates and updates wins/plays of parent nodes
+        updates win count of current node
         '''
-        self.wins += int(self.board.active_player == winner)
+        self.wins += win_prob
         self.plays += 1
-        self.parent.update(winner) if self.parent else pass
 
     def is_root(self):
         return self.parent == None
@@ -68,14 +67,17 @@ class MCTSTree:
 
         # expansion
         if curr.won:
-            winner = curr.board.active_player
+            win_prob = 1 # active player wins
         else:
             curr.expand()
             curr = curr.select()
-            winner = curr.simulate() # simulation
+            win_prob = curr.simulate() # simulation
 
         # backpropagation
-        curr.update(winner)
+        while curr.parent is not None:
+            curr.update(win_prob)
+            curr = curr.parent
+            win_prob = 1 - win_prob
 
     def train(self):
         for _ in range(1000):

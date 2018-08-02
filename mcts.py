@@ -1,6 +1,10 @@
 from __future__ import division # enable float division
 import random
+import numpy as np
+
 from game.board import Board
+
+NUM_PLAYOUTS = 1000
 
 class MCTSNode:
     def __init__(self, parent, board, won):
@@ -14,16 +18,14 @@ class MCTSNode:
     def select(self):
         '''
         chooses a child node with probability = relative win ratio
-        precondition: node has children
         '''
-        sum_ratios = sum({child._get_win_ratio() for child in self.children})
+        assert not self.is_leaf()
+        max_weight = 0
         for child in self.children:
-            child_ratio = child._get_win_ratio()
-            if random.random() < child_ratio/sum_ratios:
-                return child
-            else:
-                sum_ratios -= child_ratio
-        return None
+            if np.random.beta(child.wins+1, child.plays-child.wins+1) > max_weight:
+                max_weight = weight
+                max_child = child
+        return max_child
 
     def expand(self):
         '''
@@ -80,6 +82,6 @@ class MCTSTree:
             win_prob = 1 - win_prob
 
     def train(self):
-        for _ in range(1000):
+        for _ in range(NUM_PLAYOUTS):
             self.playout()
 

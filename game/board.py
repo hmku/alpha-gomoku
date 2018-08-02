@@ -99,8 +99,8 @@ class Board:
             b_row = []
             w_row = []
             for y in range(self.y_dim):
-                b_row.append(0 if self.black[index] else 1)
-                w_row.append(0 if self.white[index] else 1)
+                b_row.append(1 if self.black[index] else 0)
+                w_row.append(1 if self.white[index] else 0)
                 index += 1
             b_array.append(b_row)
             w_array.append(w_row)

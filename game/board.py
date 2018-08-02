@@ -10,6 +10,7 @@ class Board:
         size = x_dim * y_dim
         self.black = BitArray(int=0, length=size)
         self.white = BitArray(int=0, length=size)
+        self.active_player = 0
 
     def get_index(self, x, y):
         return self.x_dim * x + y
@@ -21,15 +22,21 @@ class Board:
         return isinstance(x, int) and isinstance(y, int) and\
             x >= 0 and x < self.x_dim and y >= 0 and y < self.y_dim
 
-    def valid_move(self, x, y, player):
+    def valid_move(self, move, player):
         '''
         checks whether given move is valid
         '''
+        if isinstance(move, int):
+            index = move
+            x, y = self.get_coords(index)
+        else:
+            x, y = move
+            index = self.get_index(x, y)
+
         if not self.valid_coord(x, y):
             return False
-        if player != 0 and player != 1:
+        if player != self.active_player:
             return False
-        index = self.get_index(x, y)
         return not self.black[index] and not self.white[index]
 
     def valid_moves(self):
@@ -40,16 +47,22 @@ class Board:
             for index in range(self.x_dim * self.y_dim)
             if not self.white[index] and not self.black[index]}
 
-    def is_winning_move(self, x, y, player):
+    def is_winning_move(self, move, player):
         '''
         returns whether the given move is a winning move
         '''
-        if not self.valid_move(x, y, player):
+        if not self.valid_move(move, player):
             return False
         if player == 0:
             color = self.black
         else:
             color = self.white
+
+        if isinstance(move, int):
+            x, y = self.get_coords(move)
+        else:
+            x, y = move
+
         for dx, dy in [(1, 0), (1, 1), (0, 1), (-1, 1)]:
             cx, cy = x, y
             in_dir = 0
@@ -87,23 +100,29 @@ class Board:
         copy.black = self.black[:]
         return copy
 
-    def make_move(self, x, y, player):
+    def make_move(self, move, player):
         '''
         makes the given move on the board
 
         then returns whether that move won the game
         '''
-        assert(self.valid_move(x, y, player))
+        assert(self.valid_move(move, player))
 
-        index = self.get_index(x, y)
+        if isinstance(move, int):
+            index = move
+        else:
+            x, y = move
+            index = self.get_index(x, y)
 
-        win = self.is_winning_move(x, y, player)
+        win = self.is_winning_move(move, player)
 
         if player == 0:
             self.black.set(1, index)
 
         if player == 1:
             self.white.set(1, index)
+
+        self.active_player = 1 - self.active_player
 
         return win
 

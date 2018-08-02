@@ -34,13 +34,11 @@ class Board:
 
     def valid_moves(self):
         '''
-        returns a list of all valid moves
+        returns a set of all valid moves
         '''
-        moves = []
-        for index in range(self.x_dim * self.y_dim):
-            if not self.white[index] and not self.black[index]:
-                moves.append(self.get_coords(index))
-        return moves
+        return {index
+            for index in range(self.x_dim * self.y_dim)
+            if not self.white[index] and not self.black[index]}
 
     def is_winning_move(self, x, y, player):
         '''

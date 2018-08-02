@@ -11,7 +11,7 @@ class MCTSNode:
         self.wins = 0
         self.plays = 0
 
-    def select():
+    def select(self):
         '''
         chooses a child node with probability = relative win ratio
         precondition: node has children
@@ -25,7 +25,7 @@ class MCTSNode:
                 sum_ratios -= child_ratio
         return None
 
-    def expand():
+    def expand(self):
         '''
         add all valid moves as child nodes
         '''
@@ -34,11 +34,11 @@ class MCTSNode:
             for move in self.board.valid_moves()
         }
 
-    def simulate():
+    def simulate(self):
         # get win or loss
         pass
 
-    def update(winner):
+    def update(self, winner):
         '''
         recursively backpropagates and updates wins/plays of parent nodes
         '''
@@ -46,13 +46,13 @@ class MCTSNode:
         self.plays += 1
         self.parent.update(winner) if self.parent else pass
 
-    def is_root():
+    def is_root(self):
         return self.parent == None
 
-    def is_leaf():
+    def is_leaf(self):
         return len(self.children) == 0
 
-    def _get_win_ratio():
+    def _get_win_ratio(self):
         return 1 if self.wins == 0 and self.plays == 0 else self.wins/self.plays
 
 
@@ -60,7 +60,7 @@ class MCTSTree:
     def __init__(self):
         root = MCTSNode(None, Board(), False)
 
-    def playout():
+    def playout(self):
         # selection
         curr = self.root
         while not curr.is_leaf():
@@ -77,7 +77,7 @@ class MCTSTree:
         # backpropagation
         curr.update(winner)
 
-    def train():
+    def train(self):
         for _ in range(1000):
             self.playout()
 

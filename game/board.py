@@ -91,6 +91,25 @@ class Board:
                 return True
         return False
 
+    def as_array(self):
+        b_array = []
+        w_array = []
+        index = 0
+        for x in range(self.x_dim):
+            b_row = []
+            w_row = []
+            for y in range(self.y_dim):
+                b_row.append(0 if self.black[index] else 1)
+                w_row.append(0 if self.white[index] else 1)
+                index += 1
+            b_array.append(b_row)
+            w_array.append(w_row)
+
+        if self.active_player == 0:
+            return [b_array, w_array]
+        else:
+            return [w_array, b_array]
+
     def copy(self):
         '''
         returns a copy of the board
@@ -124,7 +143,7 @@ class Board:
 
         self.active_player = 1 - self.active_player
 
-        return win
+        return self, win
 
     def __str__(self):
         index = 0

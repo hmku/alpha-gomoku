@@ -23,6 +23,3 @@ class Net(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.activation(x)
         return x
-
-net = Net()
-print(net)

@@ -145,18 +145,19 @@ class Board:
 
     def __str__(self):
         index = 0
-        vals = []
+        rows = []
         for x in range(self.x_dim):
+            row = []
             for y in range(self.y_dim):
                 if self.black[index]:
-                    vals.append('X')
+                    row.append('X')
                 elif self.white[index]:
-                    vals.append('O')
+                    row.append('O')
                 else:
-                    vals.append('.')
+                    row.append('.')
                 index += 1
-            vals.append('\n')
-        return ' '.join(vals)
+            rows.append(' '.join(row))
+        return '\n'.join(rows)
 
     def __repr__(self):
         return str(self.black.bin) + str(self.white.bin)

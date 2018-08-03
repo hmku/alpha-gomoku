@@ -23,7 +23,7 @@ class Board:
         return isinstance(x, int) and isinstance(y, int) and\
             x >= 0 and x < self.x_dim and y >= 0 and y < self.y_dim
 
-    def valid_move(self, move, player):
+    def valid_move(self, move):
         '''
         checks whether given move is valid
         '''
@@ -36,8 +36,6 @@ class Board:
 
         if not self.valid_coord(x, y):
             return False
-        if player != self.active_player:
-            return False
         return not self.black[index] and not self.white[index]
 
     def valid_moves(self):
@@ -46,13 +44,13 @@ class Board:
         '''
         return self.empty
 
-    def is_winning_move(self, move, player):
+    def is_winning_move(self, move):
         '''
         returns whether the given move is a winning move
         '''
-        if not self.valid_move(move, player):
+        if not self.valid_move(move):
             return False
-        if player == 0:
+        if self.active_player == 0:
             color = self.black
         else:
             color = self.white
@@ -119,13 +117,13 @@ class Board:
         copy.empty = set(self.empty)
         return copy
 
-    def make_move(self, move, player):
+    def make_move(self, move):
         '''
         makes the given move on the board
 
         then returns whether that move won the game
         '''
-        assert(self.valid_move(move, player))
+        assert(self.valid_move(move))
 
         if isinstance(move, int):
             index = move
@@ -133,11 +131,11 @@ class Board:
             x, y = move
             index = self.get_index(x, y)
 
-        win = self.is_winning_move(move, player)
+        win = self.is_winning_move(move)
 
-        if player == 0:
+        if self.active_player == 0:
             self.black.set(1, index)
-        if player == 1:
+        if self.active_player == 1:
             self.white.set(1, index)
         self.empty.remove(index)
         self.active_player = 1 - self.active_player

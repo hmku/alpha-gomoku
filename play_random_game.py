@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import torch
 
 from board import Board
@@ -5,7 +7,6 @@ from gomoku_net import Net
 
 board = Board()
 net = Net()
-player = False
 done = False
 
 while not done:
@@ -24,8 +25,7 @@ while not done:
             break
 
     # play top (valid) move
-    done = board.make_move(top_move, player)[1]
-    player = not player
+    done = board.make_move(top_move)[1]
 
 print(board)
 

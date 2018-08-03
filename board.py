@@ -158,7 +158,7 @@ class Board:
                     vals.append('.')
                 index += 1
             vals.append('\n')
-        return ''.join(vals)
+        return ' '.join(vals)
 
     def __repr__(self):
         return str(self.black.bin) + str(self.white.bin)

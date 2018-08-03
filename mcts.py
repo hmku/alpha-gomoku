@@ -33,7 +33,7 @@ class MCTSNode(object):
         add all valid moves as child nodes
         '''
         self.children = {
-            Node(
+            MCTSNode(
                 *self.board.copy().make_move(move, self.player),
                 parent=self,
                 last_move=move

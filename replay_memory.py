@@ -1,15 +1,11 @@
+from collections import namedtuple
 import random
 
 from board import Board
 from gomoku_net import Net
 
-class Transition():
-
-    def __init__(self, state, action, next_state, reward):
-        self.state = state
-        self.action = action
-        self.next_state = next_state
-        self.reward = reward
+Transition = namedtuple('Transition',
+                        ('state', 'action', 'next_state', 'reward'))
 
 
 class ReplayMemory(object):
@@ -19,11 +15,11 @@ class ReplayMemory(object):
         self.memory = []
         self.position = 0
 
-    def push(self, transition):
+    def push(self, *args):
         """Saves a transition."""
         if len(self.memory) < self.capacity:
             self.memory.append(None)
-        self.memory[self.position] = transition
+        self.memory[self.position] = Transition(*args)
         self.position = (self.position + 1) % self.capacity
 
     def sample(self, batch_size):

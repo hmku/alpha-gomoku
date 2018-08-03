@@ -28,8 +28,3 @@ while not done:
     done = board.make_move(top_move)[1]
 
 print(board)
-
-
-
-
-

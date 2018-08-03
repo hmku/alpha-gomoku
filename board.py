@@ -10,6 +10,7 @@ class Board:
         size = x_dim * y_dim
         self.black = BitArray(int=0, length=size)
         self.white = BitArray(int=0, length=size)
+        self.empty = {index for index in range(size)}
         self.active_player = 0
 
     def get_index(self, x, y):
@@ -43,9 +44,7 @@ class Board:
         '''
         returns a set of all valid moves
         '''
-        return {index
-            for index in range(self.x_dim * self.y_dim)
-            if not self.white[index] and not self.black[index]}
+        return self.empty
 
     def is_winning_move(self, move, player):
         '''
@@ -137,10 +136,9 @@ class Board:
 
         if player == 0:
             self.black.set(1, index)
-
         if player == 1:
             self.white.set(1, index)
-
+        self.empty.remove(index)
         self.active_player = 1 - self.active_player
 
         return self, win

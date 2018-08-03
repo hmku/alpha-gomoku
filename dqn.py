@@ -4,8 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-from game.board import Board
-from net.gomoku_net import Net
+from board import Board
+from gomoku_net import Net
 
 
 class Transition():
@@ -36,3 +36,14 @@ class ReplayMemory(object):
 
     def __len__(self):
         return len(self.memory)
+
+
+# TODO: util function for board transformation
+
+
+
+
+
+
+
+

@@ -1,7 +1,7 @@
 import torch
 
-from game.board import Board
-from net.gomoku_net import Net
+from board import Board
+from gomoku_net import Net
 
 board = Board()
 net = Net()

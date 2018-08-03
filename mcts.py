@@ -93,6 +93,5 @@ class MCTSTree(object):
 
     def get_move(self):
         self._train()
-        print 'trained!'
         return max(root.children, key=lambda child: child.get_win_ratio()).last_move
 

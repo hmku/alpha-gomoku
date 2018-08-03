@@ -2,10 +2,10 @@ from __future__ import division # enable float division
 import random
 import numpy as np
 
-from game.board import Board
+from board import Board
 
 
-class MCTSNode:
+class MCTSNode(object):
     def __init__(self, board, won, parent=None, last_move=None):
         self.board = board
         self.won = won
@@ -22,7 +22,8 @@ class MCTSNode:
         assert not self.is_leaf()
         max_weight = 0
         for child in self.children:
-            if np.random.beta(child.wins+1, child.plays-child.wins+1) > max_weight:
+            weight = np.random.beta(child.wins+1, child.plays-child.wins+1)
+            if weight > max_weight:
                 max_weight = weight
                 max_child = child
         return max_child
@@ -32,7 +33,11 @@ class MCTSNode:
         add all valid moves as child nodes
         '''
         self.children = {
-            Node(*self.board.copy().make_move(move, self.player), self, move)
+            Node(
+                *self.board.copy().make_move(move, self.player),
+                parent=self,
+                last_move=move
+            )
             for move in self.board.valid_moves()
         }
 
@@ -57,10 +62,10 @@ class MCTSNode:
         return 1 if self.wins == 0 and self.plays == 0 else self.wins/self.plays
 
 
-class MCTSTree:
-    def __init__(self, playouts=1000):
-        root = MCTSNode(Board(), False)
-        playouts = playouts
+class MCTSTree(object):
+    def __init__(self, board=Board(), playouts=1000):
+        self.root = MCTSNode(board, False)
+        self.playouts = playouts
 
     def _playout(self):
         # selection
@@ -83,10 +88,11 @@ class MCTSTree:
             win_prob = 1 - win_prob
 
     def _train(self):
-        for _ in range(playouts):
+        for _ in range(self.playouts):
             self._playout()
 
     def get_move(self):
         self._train()
+        print 'trained!'
         return max(root.children, key=lambda child: child.get_win_ratio()).last_move
 

@@ -10,20 +10,25 @@ from board import Board
 from gomoku_net import Net
 from replay_memory import Transition, ReplayMemory
 
-BATCH_SIZE = 2
-GAMMA = 0.999
+BATCH_SIZE = 32
+GAMMA = 1.000
 EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 200
 TARGET_UPDATE = 10
+SAVE_STEP = 250
+BOARD_DIM = 19
+BOARD_SIZE = BOARD_DIM * BOARD_DIM
+RESULTS_PATH='results.log'
 
+# NOTE: if loading model, set steps_done to a million
 policy_net = Net()
 target_net = Net()
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
 optimizer = optim.RMSprop(policy_net.parameters())
-memory = ReplayMemory(100)
+memory = ReplayMemory(10000)
 
 steps_done = 0
 
@@ -48,17 +53,15 @@ def select_action(state):
             q_values = policy_net(state)
 
         # choose top (valid) action
-        actions = torch.topk(q_values, 361)
+        actions = torch.topk(q_values, BOARD_SIZE)
         actions = actions[1].squeeze(0)
-        for i in range(361):
+        for i in range(BOARD_SIZE):
             action = actions[i]
             if action.item() in valid_actions:
                 return torch.tensor([[action.item()]], dtype=torch.long)
     else:
-        while 1:
-            action = torch.tensor([[random.randrange(361)]], dtype=torch.long)
-            if action.item() in valid_actions:
-                return action
+        action = random.sample(valid_actions, 1)[0]
+        return torch.tensor([[action]], dtype=torch.long)
 
 def get_tensor(board):
     '''
@@ -110,29 +113,42 @@ def optimize_model():
     optimizer.step()
 
 # train
-num_episodes = 50
-for i_episode in range(num_episodes):
-    state = Board()
-    for t in count():
-        # Select and perform an action
-        action = select_action(state)
-        next_state, done = state.make_move(action.item())
-        if done:
-            print(next_state)
-            next_state = None
-        reward = torch.tensor([done])
+if __name__ == '__main__':
+    results = [0, 0] # black wins, white wins
+    num_episodes = 100000
+    for i_episode in range(num_episodes):
+        state = Board(x_dim=BOARD_DIM, y_dim=BOARD_DIM)
+        for t in count():
+            # Select and perform an action
+            action = select_action(state)
+            next_state, done = state.make_move(action.item())
+            if done:
+                if i_episode % SAVE_STEP == 0:
+                    print(next_state)
+                    print('\n\n\n')
+                results[1 - next_state.active_player] += 1
+                next_state = None
+            reward = torch.tensor([done])
 
-        # Store the transition in memory and move to next state
-        memory.push(get_tensor(state), action, get_tensor(next_state), reward)
-        state = next_state
+            # Store the transition in memory and move to next state
+            memory.push(get_tensor(state), action, get_tensor(next_state), reward)
+            state = next_state
 
-        # Perform one step of the optimization (on the target network)
+            # Perform one step of the optimization (on the target network)
+            if done:
+                break
+
         optimize_model()
-        if done:
-            break
 
-    # Update the target network
-    if i_episode % TARGET_UPDATE == 0:
-        target_net.load_state_dict(policy_net.state_dict())
+        # Update the target network
+        if i_episode % TARGET_UPDATE == 0:
+            target_net.load_state_dict(policy_net.state_dict())
 
-print('Training complete.')
+        # Save model
+        if i_episode % SAVE_STEP == 0:
+            path = 'models/gomoku_net_{}'.format(i_episode)
+            torch.save(policy_net.state_dict(), path)
+            with open(RESULTS_PATH, 'a') as f:
+                f.write(str(results) + '\n')
+
+    print('Training complete.')

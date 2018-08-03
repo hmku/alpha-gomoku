@@ -1,14 +1,18 @@
 from __future__ import division # enable float division
 import random
 import numpy as np
+import torch
 
 from board import Board
+from gomoku_net import Net
+from dqn import get_tensor
 
 
 class MCTSNode(object):
-    def __init__(self, board, won, parent=None, last_move=None):
+    def __init__(self, board, won, net=None, parent=None, last_move=None):
         self.board = board
         self.won = won
+        self.net = net
         self.parent = parent
         self.last_move = last_move
         self.children = {}
@@ -35,6 +39,7 @@ class MCTSNode(object):
         self.children = {
             MCTSNode(
                 *self.board.copy().make_move(move),
+                net=self.net, 
                 parent=self,
                 last_move=move
             )
@@ -42,8 +47,9 @@ class MCTSNode(object):
         }
 
     def simulate(self):
-        # get win or loss
-        pass
+        state = get_tensor(self.parent.board)
+        q_values = self.net(state)
+        return q_values[0][self.last_move].item()
 
     def update(self, win_prob):
         '''
@@ -63,8 +69,8 @@ class MCTSNode(object):
 
 
 class MCTSTree(object):
-    def __init__(self, board=Board(), playouts=1000):
-        self.root = MCTSNode(board, False)
+    def __init__(self, net, board=Board(), playouts=1000):
+        self.root = MCTSNode(board, False, net=net)
         self.playouts = playouts
 
     def _playout(self):

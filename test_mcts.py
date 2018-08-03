@@ -4,6 +4,7 @@ import pytest
 
 from mcts import MCTSNode, MCTSTree
 from board import Board
+from gomoku_net import Net
 
 class MCTSNodeMock(MCTSNode):
     def __init__(self, *args, **kwargs):
@@ -35,9 +36,9 @@ class MCTSTreeMock(MCTSTree):
         self.root = MCTSNodeMock(board, False)
         self.playouts = playouts
 
-DIM = 5
-PLAYOUTS = 1000
-tree = MCTSTreeMock(board=Board(x_dim=DIM, y_dim=DIM), playouts=PLAYOUTS)
+DIM = 19
+PLAYOUTS = 100
+tree = MCTSTree(Net(), board=Board(x_dim=DIM, y_dim=DIM), playouts=PLAYOUTS)
 assert tree.playouts == PLAYOUTS
 assert tree.root.board.x_dim == DIM and tree.root.board.y_dim == DIM
 move = tree.get_move()

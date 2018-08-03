@@ -103,7 +103,7 @@ class MCTSTree(object):
             win_prob = curr.simulate() # simulation
 
         # backpropagation
-        while curr.parent is not None:
+        while curr is not None:
             curr.update(win_prob)
             curr = curr.parent
             win_prob = 1 - win_prob
@@ -119,4 +119,5 @@ class MCTSTree(object):
         return chosen.last_move
 
     def get_move_dist(self):
-        return [float(self.root.children[move].plays) / self.root.plays if move in self.root.children else 0.0 for move in range(361)]
+        print(self.root.plays)
+        return [(float(self.root.children[move].plays) / self.root.plays) if move in self.root.children else 0.0 for move in range(361)]

@@ -33,7 +33,8 @@ class Net(nn.Module): # for 19x19
         
         self.fc1 = nn.Linear(50 * 7 * 7, 362)
 
-        self.activation = nn.Sigmoid()
+        self.policy_activation = nn.Sigmoid()
+        self.value_activation = nn.Tanh()
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -41,5 +42,7 @@ class Net(nn.Module): # for 19x19
         x = F.relu(self.conv3(x))
         x = x.view(-1, 50 * 7 * 7)
         x = self.fc1(x)
-        x = self.activation(x)
+        y = self.policy_activation(x[:, :361])
+        z = self.value_activation(x[:, 361].unsqueeze(1))
+        x = torch.cat((y, z), 1)
         return x

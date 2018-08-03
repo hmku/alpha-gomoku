@@ -115,6 +115,7 @@ class Board:
         copy.white = self.white[:]
         copy.black = self.black[:]
         copy.empty = set(self.empty)
+        copy.active_player = self.active_player
         return copy
 
     def make_move(self, move):

@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from board import Board
 from gomoku_net import Net
 from replay_memory import Transition, ReplayMemory
+import mcts
 
 BATCH_SIZE = 32
 GAMMA = 1.000
@@ -16,7 +17,7 @@ EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 200
 TARGET_UPDATE = 10
-SAVE_STEP = 250
+SAVE_STEP = 1
 BOARD_DIM = 19
 BOARD_SIZE = BOARD_DIM * BOARD_DIM
 RESULTS_PATH='results.log'
@@ -47,6 +48,12 @@ def select_action(state):
     valid_actions = state.valid_moves()
 
     if sample > eps_threshold:
+        print 'calculating...'
+        t = mcts.MCTSTree(policy_net, board=state, playouts=1000)
+        move = t.get_move()
+        print move
+        return torch.tensor([[move]], dtype=torch.long)
+        '''
         # compute q-values
         state = get_tensor(state) 
         with torch.no_grad():
@@ -59,6 +66,7 @@ def select_action(state):
             action = actions[i]
             if action.item() in valid_actions:
                 return torch.tensor([[action.item()]], dtype=torch.long)
+        '''
     else:
         action = random.sample(valid_actions, 1)[0]
         return torch.tensor([[action]], dtype=torch.long)
@@ -121,18 +129,18 @@ if __name__ == '__main__':
         for t in count():
             # Select and perform an action
             action = select_action(state)
-            next_state, done = state.make_move(action.item())
+            prev_state = state.copy()
+            _, done = state.make_move(action.item())
             if done:
                 if i_episode % SAVE_STEP == 0:
-                    print(next_state)
-                    print('\n\n\n')
-                results[1 - next_state.active_player] += 1
-                next_state = None
+                    print state
+                    print '\n\n\n'
+                results[prev_state.active_player] += 1
+                state = None
             reward = torch.tensor([done])
 
             # Store the transition in memory and move to next state
-            memory.push(get_tensor(state), action, get_tensor(next_state), reward)
-            state = next_state
+            memory.push(get_tensor(prev_state), action, get_tensor(state), reward)
 
             # Perform one step of the optimization (on the target network)
             if done:

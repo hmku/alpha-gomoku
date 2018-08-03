@@ -9,15 +9,15 @@ from dqn import get_tensor
 
 
 class MCTSNode(object):
-    def __init__(self, board, won, net=None, parent=None, last_move=None):
+    def __init__(self, board, won, q=None, parent=None, last_move=None):
         self.board = board
         self.won = won
-        self.net = net
+        self.q = q
         self.parent = parent
         self.last_move = last_move
         self.children = {}
-        self.wins = 0
-        self.plays = 0
+        self.wins = 1
+        self.plays = 2
 
     def select(self):
         '''
@@ -26,20 +26,22 @@ class MCTSNode(object):
         assert not self.is_leaf()
         max_weight = 0
         for child in self.children:
-            weight = np.random.beta(child.wins+1, child.plays-child.wins+1)
+            weight = np.random.beta(child.wins, child.plays-child.wins)
             if weight > max_weight:
                 max_weight = weight
                 max_child = child
         return max_child
 
-    def expand(self):
+    def expand(self, net):
         '''
         add all valid moves as child nodes
         '''
+        state = get_tensor(self.board)
+        q_values = net(state)[0]
         self.children = {
             MCTSNode(
                 *self.board.copy().make_move(move),
-                net=self.net, 
+                q=q_values[move].item(),
                 parent=self,
                 last_move=move
             )
@@ -47,9 +49,7 @@ class MCTSNode(object):
         }
 
     def simulate(self):
-        state = get_tensor(self.parent.board)
-        q_values = self.net(state)
-        return q_values[0][self.last_move].item()
+        return self.q
 
     def update(self, win_prob):
         '''
@@ -70,8 +70,9 @@ class MCTSNode(object):
 
 class MCTSTree(object):
     def __init__(self, net, board=Board(), playouts=1000):
-        self.root = MCTSNode(board, False, net=net)
+        self.root = MCTSNode(board, False)
         self.playouts = playouts
+        self.net = net
 
     def _playout(self):
         # selection
@@ -83,7 +84,7 @@ class MCTSTree(object):
         if curr.won:
             win_prob = 1 # active player wins
         else:
-            curr.expand()
+            curr.expand(self.net)
             curr = curr.select()
             win_prob = curr.simulate() # simulation
 
@@ -99,6 +100,6 @@ class MCTSTree(object):
 
     def get_move(self):
         self._train()
-        return max(self.root.children,
-            key=lambda child: child.get_win_ratio()).last_move
-
+        c = list(self.root.children)
+        chosen = np.random.choice(c, 1, [child.plays for child in c])[0]
+        return chosen.last_move

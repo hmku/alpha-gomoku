@@ -9,47 +9,62 @@ from dqn import get_tensor
 
 
 class MCTSNode(object):
-    def __init__(self, board, won, q=None, parent=None, last_move=None):
-        self.board = board
+    def __init__(self, board, won, parent=None, last_move=None, net=None):
+        self.board = board.copy()
+        self.moves = board.valid_moves()
         self.won = won
-        self.q = q
         self.parent = parent
         self.last_move = last_move
         self.children = {}
-        self.wins = 1
-        self.plays = 2
+        self.wins = 0
+        self.plays = 0
+        vals = [x.item() for x in net(get_tensor(board))[0]]
+        self.p = vals[:-1]
+        self.v = vals[-1]
+        self.net = net
 
     def select(self):
         '''
-        chooses a child node with probability = relative win ratio
+        chooses a move
         '''
-        assert not self.is_leaf()
         max_weight = 0
-        for child in self.children:
-            weight = np.random.beta(child.wins, child.plays-child.wins)
+        for move in self.moves:
+            if move in self.children:
+                child = self.children[move]
+                if child.won:
+                    q = float('inf')
+                else:
+                    q = child.wins / child.plays
+                u = child.p[move] / (1 + child.plays)
+                weight = q + u
+            else:
+                q = 1
+                u = self.p[move]
+                weight = q + u
+
             if weight > max_weight:
                 max_weight = weight
-                max_child = child
+                max_child = move
         return max_child
 
-    def expand(self, net):
+    def expand(self, move):
         '''
-        add all valid moves as child nodes
+        add child node
         '''
-        state = get_tensor(self.board)
-        q_values = net(state)[0]
-        self.children = {
-            MCTSNode(
-                *self.board.copy().make_move(move),
-                q=q_values[move].item(),
+        assert move not in self.children
+        new_board, won = self.board.copy().make_move(move)
+        new_node = MCTSNode(
+                new_board,
+                won,
                 parent=self,
-                last_move=move
+                last_move=move,
+                net=self.net
             )
-            for move in self.board.valid_moves()
-        }
+        self.children[move] = new_node
+        return new_node
 
     def simulate(self):
-        return self.q
+        return self.v
 
     def update(self, win_prob):
         '''
@@ -61,31 +76,30 @@ class MCTSNode(object):
     def is_root(self):
         return self.parent == None
 
-    def is_leaf(self):
-        return len(self.children) == 0
-
     def get_win_ratio(self):
-        return 1 if self.wins == 0 and self.plays == 0 else self.wins/self.plays
+        return 1 if self.plays == 0 else self.wins / self.plays
 
 
 class MCTSTree(object):
     def __init__(self, net, board=Board(), playouts=1000):
-        self.root = MCTSNode(board, False)
+        self.root = MCTSNode(board, False, net=net)
         self.playouts = playouts
-        self.net = net
 
     def _playout(self):
         # selection
         curr = self.root
-        while not curr.is_leaf():
-            curr = curr.select()
+        while not curr.won:
+            move = curr.select()
+            if move in curr.children:
+                curr = curr.children[move]
+            else:
+                break
 
         # expansion
         if curr.won:
             win_prob = 1 # active player wins
         else:
-            curr.expand(self.net)
-            curr = curr.select()
+            curr = curr.expand(move)
             win_prob = curr.simulate() # simulation
 
         # backpropagation
@@ -100,6 +114,9 @@ class MCTSTree(object):
 
     def get_move(self):
         self._train()
-        c = list(self.root.children)
+        c = self.root.children.values()
         chosen = np.random.choice(c, 1, [child.plays for child in c])[0]
         return chosen.last_move
+
+    def get_move_dist(self):
+        return [float(self.children[move].plays) / self.plays if move in self.children else 0.0 for move in range(361)]

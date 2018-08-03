@@ -44,6 +44,6 @@ assert tree.root.board.x_dim == DIM and tree.root.board.y_dim == DIM
 move = tree.get_move()
 print "Best move: " + str(move)
 assert move >= 0 and move < (DIM*DIM)
-for child in tree.root.children:
+for child in tree.root.children.values():
     print (child.wins, child.plays, child.get_win_ratio())
 assert len(tree.root.children) == (DIM*DIM)

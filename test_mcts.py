@@ -14,12 +14,10 @@ class MCTSNodeMock(MCTSNode):
         add all valid moves as child nodes
         '''
         self.children = set()
-        print self.board.valid_moves()
         for move in self.board.valid_moves():
-            print move
             self.children.add(
                 MCTSNodeMock(
-                    *self.board.copy().make_move(move, self.board.active_player),
+                    *self.board.copy().make_move(move),
                     parent=self,
                     last_move=move
                 )
@@ -34,13 +32,17 @@ class MCTSNodeMock(MCTSNode):
 
 class MCTSTreeMock(MCTSTree):
     def __init__(self, board=Board(), playouts=1000):
-        self.root = MCTSNodeMock(Board(), False)
+        self.root = MCTSNodeMock(board, False)
         self.playouts = playouts
 
-tree = MCTSTreeMock()
-assert len(tree.root.board.valid_moves()) == 361
-assert tree.playouts == 1000
+DIM = 5
+PLAYOUTS = 1000
+tree = MCTSTreeMock(board=Board(x_dim=DIM, y_dim=DIM), playouts=PLAYOUTS)
+assert tree.playouts == PLAYOUTS
+assert tree.root.board.x_dim == DIM and tree.root.board.y_dim == DIM
 move = tree.get_move()
-print move
-assert move >= 0 and move < 361
-print tree.root.board
+print "Best move: " + str(move)
+assert move >= 0 and move < (DIM*DIM)
+for child in tree.root.children:
+    print (child.wins, child.plays, child.get_win_ratio())
+assert len(tree.root.children) == (DIM*DIM)

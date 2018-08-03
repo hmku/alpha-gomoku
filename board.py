@@ -111,7 +111,7 @@ class Board:
         '''
         returns a copy of the board
         '''
-        copy = Board()
+        copy = Board(x_dim = self.x_dim, y_dim = self.y_dim)
         copy.white = self.white[:]
         copy.black = self.black[:]
         copy.empty = set(self.empty)

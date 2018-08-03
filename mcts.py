@@ -34,7 +34,7 @@ class MCTSNode(object):
         '''
         self.children = {
             MCTSNode(
-                *self.board.copy().make_move(move, self.player),
+                *self.board.copy().make_move(move),
                 parent=self,
                 last_move=move
             )
@@ -93,5 +93,6 @@ class MCTSTree(object):
 
     def get_move(self):
         self._train()
-        return max(root.children, key=lambda child: child.get_win_ratio()).last_move
+        return max(self.root.children,
+            key=lambda child: child.get_win_ratio()).last_move
 

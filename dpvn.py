@@ -45,7 +45,7 @@ def select_action(state):
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
     valid_actions = state.valid_moves()
-    t = mcts.MCTSTree(policy_net, board=state, playouts=1000)
+    t = mcts.MCTSTree(policy_net, board=state, playouts=400)
 
     if sample > eps_threshold:
         print 'calculating...'

@@ -20,7 +20,7 @@ class MCTSNode(object):
         self.plays = 0
         vals = [x.item() for x in net(get_tensor(board))[0]]
         self.p = vals[:-1]
-        self.v = vals[-1]
+        self.v = (1 + vals[-1]) / 2.0
         self.net = net
 
     def select(self):
@@ -45,8 +45,10 @@ class MCTSNode(object):
             # print "max weight: {}\n".format(max_weight)
             if not max_weight or weight > max_weight:
                 max_weight = weight
-                max_child = move
-        return max_child
+                max_children = {move}
+            elif weight == max_weight:
+                max_children |= {move}
+        return random.sample(max_children, 1)[0]
 
     def expand(self, move):
         '''

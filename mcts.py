@@ -119,5 +119,4 @@ class MCTSTree(object):
         return chosen.last_move
 
     def get_move_dist(self):
-        print(self.root.plays)
         return [(float(self.root.children[move].plays) / self.root.plays) if move in self.root.children else 0.0 for move in range(361)]

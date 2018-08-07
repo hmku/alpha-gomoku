@@ -45,7 +45,7 @@ def select_action(state):
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
     valid_actions = state.valid_moves()
-    t = mcts.MCTSTree(policy_net, board=state, playouts=1000)
+    t = mcts.MCTSTree(policy_net, board=state, playouts=1)
 
     if sample > eps_threshold:
         print 'calculating...'
@@ -87,9 +87,8 @@ def optimize_model():
     batch = Step(*zip(*steps))
 
     state_batch = torch.cat(batch.state)
-    policy_batch = torch.cat(batch.policy)
+    policy_batch = torch.stack(batch.policy, 0)
     reward_batch = torch.cat(batch.reward)
-    reward_batch = reward_batch.type(torch.FloatTensor)
 
     # Compute p, v with model acting on state
     policy_value = policy_net(state_batch) # 32 x 362
@@ -99,7 +98,19 @@ def optimize_model():
     # Compute loss
     mse_loss = nn.MSELoss()
     ce_loss = nn.CrossEntropyLoss()
-    loss = mse_loss(reward_batch, expected_value) + ce_loss(policy_batch, expected_policy)
+    reward_batch = reward_batch.type(torch.FloatTensor)
+    expected_value = expected_value.type(torch.FloatTensor)
+    policy_batch = policy_batch.type(torch.LongTensor)
+    expected_policy = expected_policy.type(torch.FloatTensor)
+    print(reward_batch.size())
+    print(expected_value.size())
+    print(policy_batch.size())
+    print(expected_policy.size())
+    print(reward_batch.type())
+    print(expected_value.type())
+    print(policy_batch.type())
+    print(expected_policy.type())
+    loss = mse_loss(reward_batch, expected_value) + ce_loss(expected_policy, policy_batch)
 
     # Optimize the model
     optimizer.zero_grad()

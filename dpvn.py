@@ -45,7 +45,7 @@ def select_action(state):
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
     valid_actions = state.valid_moves()
-    t = mcts.MCTSTree(policy_net, board=state, playouts=1)
+    t = mcts.MCTSTree(policy_net, board=state, playouts=1000)
 
     if sample > eps_threshold:
         print 'calculating...'
@@ -97,11 +97,15 @@ def optimize_model():
 
     # Compute loss
     mse_loss = nn.MSELoss()
-    ce_loss = nn.CrossEntropyLoss()
+    # ce_loss = nn.CrossEntropyLoss()
+    kldiv_loss = nn.KLDivLoss()
     reward_batch = reward_batch.type(torch.FloatTensor)
     expected_value = expected_value.type(torch.FloatTensor)
-    policy_batch = policy_batch.type(torch.LongTensor)
+    
     expected_policy = expected_policy.type(torch.FloatTensor)
+    expected_policy = torch.log(expected_policy)
+    policy_batch = policy_batch.type(torch.FloatTensor)
+
     print(reward_batch.size())
     print(expected_value.size())
     print(policy_batch.size())
@@ -110,7 +114,7 @@ def optimize_model():
     print(expected_value.type())
     print(policy_batch.type())
     print(expected_policy.type())
-    loss = mse_loss(reward_batch, expected_value) + ce_loss(expected_policy, policy_batch)
+    loss = mse_loss(reward_batch, expected_value) + kldiv_loss(expected_policy, policy_batch)
 
     # Optimize the model
     optimizer.zero_grad()
@@ -148,8 +152,8 @@ if __name__ == '__main__':
         optimize_model() # optimize after playing a game
 
         # Update the target network
-        if i_episode % TARGET_UPDATE == 0:
-            target_net.load_state_dict(policy_net.state_dict())
+        # if i_episode % TARGET_UPDATE == 0:
+        #    target_net.load_state_dict(policy_net.state_dict())
 
         # Save model
         if i_episode % SAVE_STEP == 0:

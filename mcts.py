@@ -27,7 +27,7 @@ class MCTSNode(object):
         '''
         chooses a move
         '''
-        max_weight = 0
+        max_weight = None
         for move in self.moves:
             if move in self.children:
                 child = self.children[move]
@@ -41,8 +41,9 @@ class MCTSNode(object):
                 q = 1
                 u = self.p[move]
                 weight = q + u
-
-            if weight > max_weight:
+            # print "curr weight: {}".format(weight)
+            # print "max weight: {}\n".format(max_weight)
+            if not max_weight or weight > max_weight:
                 max_weight = weight
                 max_child = move
         return max_child

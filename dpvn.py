@@ -31,7 +31,7 @@ policy_net = Net()
 optimizer = optim.RMSprop(policy_net.parameters())
 memory = ReplayBuffer(10000)
 
-steps_done = 0
+# steps_done = 0
 
 def select_action(state):
     '''
@@ -39,36 +39,11 @@ def select_action(state):
 
     returns policy and action
     '''
-    global steps_done
-    sample = random.random()
-    eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-        math.exp(-1. * steps_done / EPS_DECAY)
-    steps_done += 1
-    valid_actions = state.valid_moves()
-    t = mcts.MCTSTree(policy_net, board=state, playouts=1000)
-
-    if sample > eps_threshold:
-        print 'calculating...'
-        move = t.get_move()
-        print move
-        return t.get_move_dist(), move
-        '''
-        # compute q-values
-        state = get_tensor(state) 
-        with torch.no_grad():
-            q_values = policy_net(state)
-
-        # choose top (valid) action
-        actions = torch.topk(q_values, BOARD_SIZE)
-        actions = actions[1].squeeze(0)
-        for i in range(BOARD_SIZE):
-            action = actions[i]
-            if action.item() in valid_actions:
-                return torch.tensor([[action.item()]], dtype=torch.long)
-        '''
-    else:
-        action = random.sample(valid_actions, 1)[0]
-        return t.get_move_dist(), action
+    t = mcts.MCTSTree(policy_net, board=state, playouts=100)
+    print 'Calculating with MCTS.'
+    move = t.get_move()
+    print move
+    return t.get_move_dist(), move
 
 def get_tensor(board):
     '''
@@ -123,7 +98,6 @@ def optimize_model():
         param.grad.data.clamp_(-1, 1)
     optimizer.step()
 
-# train
 if __name__ == '__main__':
     results = [0, 0] # black wins, white wins
     num_episodes = 100000
@@ -150,10 +124,6 @@ if __name__ == '__main__':
                 break
 
         optimize_model() # optimize after playing a game
-
-        # Update the target network
-        # if i_episode % TARGET_UPDATE == 0:
-        #    target_net.load_state_dict(policy_net.state_dict())
 
         # Save model
         if i_episode % SAVE_STEP == 0:

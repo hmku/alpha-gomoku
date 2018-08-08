@@ -20,15 +20,18 @@ TARGET_UPDATE = 10
 SAVE_STEP = 1
 BOARD_DIM = 19
 BOARD_SIZE = BOARD_DIM * BOARD_DIM
+LOAD_FROM = 0
 RESULTS_PATH='results_dpvn.log'
 
 # NOTE: if loading model, set steps_done to a million
 policy_net = Net()
+if LOAD_FROM > 0:
+	policy_net.load_state_dict(torch.load('models/gomoku_dpvn_net_{}'.format(LOAD_FROM)))
 #target_net = Net()
 #target_net.load_state_dict(policy_net.state_dict())
 #target_net.eval()
 
-optimizer = optim.RMSprop(policy_net.parameters())
+optimizer = optim.RMSprop(policy_net.parameters(), lr=0.001)
 memory = ReplayBuffer(10000)
 
 # steps_done = 0
@@ -39,7 +42,7 @@ def select_action(state):
 
     returns policy and action
     '''
-    t = mcts.MCTSTree(policy_net, board=state, playouts=100)
+    t = mcts.MCTSTree(policy_net, board=state, playouts=1000)
     print 'Calculating with MCTS.'
     move = t.get_move()
     print move
@@ -101,27 +104,37 @@ def optimize_model():
 if __name__ == '__main__':
     results = [0, 0] # black wins, white wins
     num_episodes = 100000
-    for i_episode in range(num_episodes):
+    for i_episode in range(LOAD_FROM+1, num_episodes):
+        moves_played = [[], []]
         state = Board(x_dim=BOARD_DIM, y_dim=BOARD_DIM)
         for t in count():
             # Select and perform action and compute policy with MCTS
             policy, action = select_action(state)
             prev_state = state.copy()
             _, done = state.make_move(action)
+            print state
+            print '\n'
             if done:
+                '''
                 if i_episode % SAVE_STEP == 0:
                     print state
                     print '\n\n\n'
+                '''
                 results[prev_state.active_player] += 1
-                reward = torch.tensor([1])
-            else:
-                reward = torch.tensor([-1])
 
             # Store the step in memory and move to next state
-            memory.push(get_tensor(prev_state), torch.tensor(policy), reward)
+            moves_played[prev_state.active_player].append((get_tensor(prev_state), torch.tensor(policy)))
 
             if done:
+                winner = prev_state.active_player
                 break
+
+        for move in moves_played[winner]:
+            reward = torch.tensor([1])
+            memory.push(move[0], move[1], reward)
+        for move in moves_played[1 - winner]:
+            reward = torch.tensor([-1])
+            memory.push(move[0], move[1], reward)
 
         optimize_model() # optimize after playing a game
 

@@ -38,7 +38,7 @@ class MCTSNode(object):
                 u = child.p[move] / (1 + child.plays)
                 weight = q + u
             else:
-                q = 1
+                q = 1.0
                 u = self.p[move]
                 weight = q + u
             # print "curr weight: {}".format(weight)
@@ -86,6 +86,7 @@ class MCTSNode(object):
 class MCTSTree(object):
     def __init__(self, net, board=Board(), playouts=1000):
         self.root = MCTSNode(board, False, net=net)
+	print self.root.v
         self.playouts = playouts
 
     def _playout(self):
@@ -118,7 +119,9 @@ class MCTSTree(object):
     def get_move(self):
         self._train()
         c = self.root.children.values()
-        chosen = np.random.choice(c, 1, [child.plays for child in c])[0]
+        weights = [child.plays for child in c]
+        s = sum(weights)
+        chosen = np.random.choice(c, 1, p=[weight / s for weight in weights])[0]
         return chosen.last_move
 
     def get_move_dist(self):
